@@ -58,12 +58,46 @@
         .nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         #current-month-display { font-size: 1.2em; font-weight: bold; color: #1e293b; min-width: 160px; text-align: center; }
 
-        /* NEW: Admin Access CSS */
+        /* Admin Access CSS */
         .admin-only { display: none; }
         .locked-screen { text-align: center; padding: 40px 20px; color: #64748b; background-color: #f8fafc; border-radius: 8px; border: 2px dashed #cbd5e1;}
+
+        /* NEW: Custom Password Modal CSS */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center; width: 320px;
+        }
+        .modal-content input {
+            width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #cbd5e1; border-radius: 6px;
+            font-size: 1.5em; text-align: center; box-sizing: border-box; letter-spacing: 5px;
+        }
+        .modal-content input:focus { border-color: #3b82f6; outline: none; }
+        .modal-btn { padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 5px; width: 45%;}
+        .btn-submit { background-color: #2563eb; color: white; }
+        .btn-submit:hover { background-color: #1d4ed8; }
+        .btn-cancel { background-color: #e2e8f0; color: #334155; }
+        .btn-cancel:hover { background-color: #cbd5e1; }
     </style>
 </head>
 <body>
+
+    <div id="password-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="margin-top: 0; color: #0f172a;">🔒 Manager Login</h2>
+            <p style="color: #64748b; font-size: 0.9em;">Enter 4-digit PIN to unlock</p>
+            
+            <input type="password" id="pin-input" placeholder="••••" maxlength="4" onkeypress="if(event.key === 'Enter') checkPin()">
+            
+            <div style="display: flex; justify-content: space-between;">
+                <button class="modal-btn btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn btn-submit" onclick="checkPin()">Unlock</button>
+            </div>
+        </div>
+    </div>
 
     <div class="header">
         <img src="logo.png" alt="BUTEX Logo" class="header-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/en/3/3a/Bangladesh_University_of_Textiles_Logo.svg'">
@@ -72,7 +106,7 @@
             <div class="group-names">Presented By Group 4: SUN, RATUL, JOTY and FAHIM</div>
             <p style="margin-bottom: 15px;">Live Material Usage, Receiving History & Restock Alerts</p>
             
-            <button id="login-btn" class="login-btn" onclick="adminLogin()">🔒 Manager Login</button>
+            <button id="login-btn" class="login-btn" onclick="openModal()">🔒 Manager Login</button>
             <button class="reset-btn admin-only" id="reset-btn" onclick="startNewLot()">🔄 Emergency Data Reset</button>
         </div>
     </div>
@@ -203,29 +237,39 @@
         let sortedMonths = []; 
         let currentDisplayedMonth = "No Data";
 
-        // --- NEW: MANAGER LOGIN SYSTEM ---
-        function adminLogin() {
-            let pin = prompt("Please enter the Manager PIN:");
+        // --- NEW: Custom Modal Login System ---
+        function openModal() {
+            document.getElementById('password-modal').style.display = 'flex';
+            document.getElementById('pin-input').value = ''; // Clear previous typing
+            document.getElementById('pin-input').focus(); // Automatically select the box
+        }
+
+        function closeModal() {
+            document.getElementById('password-modal').style.display = 'none';
+        }
+
+        function checkPin() {
+            let pin = document.getElementById('pin-input').value;
             
-            // The secret PIN is 1234
+            // The secret PIN is set to 4007
             if (pin === "4007") {
-                // Hide the lock screen
-                document.getElementById('lock-screen').style.display = 'none';
+                closeModal();
                 
-                // Show all admin tools
+                // Unlock the dashboard features
+                document.getElementById('lock-screen').style.display = 'none';
                 document.getElementById('admin-input-form').style.display = 'block';
                 document.getElementById('reset-btn').style.display = 'inline-block';
                 document.getElementById('export-btn').style.display = 'inline-block';
                 
-                // Change the login button appearance
+                // Change the login button status
                 const loginBtn = document.getElementById('login-btn');
                 loginBtn.innerText = "🔓 Manager Logged In";
-                loginBtn.style.backgroundColor = "#10b981"; // Turn it green
-                loginBtn.onclick = null; // Disable clicking it again
-                
-                alert("✅ Welcome, Manager. You now have full Edit and Export access.");
+                loginBtn.style.backgroundColor = "#10b981";
+                loginBtn.onclick = null; 
             } else {
-                alert("❌ Incorrect PIN. Dashboard will remain in Read-Only Mode.");
+                alert("❌ Incorrect PIN. Please try again.");
+                document.getElementById('pin-input').value = '';
+                document.getElementById('pin-input').focus();
             }
         }
 
