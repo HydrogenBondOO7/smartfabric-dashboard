@@ -81,6 +81,53 @@
         .btn-submit:hover { background-color: #1d4ed8; }
         .btn-cancel { background-color: #e2e8f0; color: #334155; }
         .btn-cancel:hover { background-color: #cbd5e1; }
+        /* ========================================= */
+        /* 📱 MOBILE RESPONSIVE DESIGN (Media Query) */
+        /* ========================================= */
+        @media (max-width: 768px) {
+            /* 1. Stack the dashboard panels vertically instead of side-by-side */
+            .dashboard-grid { 
+                grid-template-columns: 1fr; 
+            }
+            
+            /* 2. Fix the header so the logo doesn't overlap the text */
+            .header { 
+                flex-direction: column; 
+                padding: 15px;
+            }
+            .header-logo { 
+                position: relative; 
+                left: auto; 
+                margin-bottom: 15px; 
+            }
+            .group-names {
+                font-size: 1em;
+            }
+
+            /* 3. Make buttons take up the full width so they are easy to tap */
+            .login-btn, .reset-btn, .export-btn { 
+                width: 100%; 
+                margin: 5px 0; 
+            }
+            
+            /* 4. Fix the monthly history header */
+            .flex-header { 
+                flex-direction: column; 
+                align-items: flex-start; 
+                gap: 15px; 
+            }
+            .month-controls { 
+                flex-wrap: wrap; 
+                justify-content: center;
+                width: 100%;
+            }
+
+            /* 5. Stop tables from breaking the screen width (allows sideways scrolling) */
+            .panel, .full-width-panel { 
+                overflow-x: auto; 
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
