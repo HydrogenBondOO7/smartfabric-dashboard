@@ -581,36 +581,62 @@ const FINAL_DATE = { date:'July 20', venue:'New Jersey', time:'1:00 am' };
 // ============================
 // STATE
 // ============================
+let // ============================
+// SIMPLE CLOUD SYNC
+// ============================
+
+// Make up a unique name so your locker doesn't mix with anyone else's!
+const LOCKER_URL = "https://kvdb.io/M886b4m66S84nBq7pYt9wQ/PUT_YOUR_NAME_HERE";
+
 let state = {
   teams: {},
   groupResults: {},
-  knockoutTeams: {},   // manual overrides for KO team names, keyed "r32_0_t1"
-  knockoutResults: {}, // {s1,s2,pen} keyed "r32_0"
+  knockoutTeams: {},
+  knockoutResults: {},
 };
 
-function loadState() {
-  try {
-    const s = localStorage.getItem('wc2026_state_v2');
-    if (s) state = JSON.parse(s);
-  } catch(e) {}
-}
 function saveAll(silent) {
-  localStorage.setItem('wc2026_state_v2', JSON.stringify(state));
-  if (!silent) showToast('All changes saved! ✓');
+  fetch(LOCKER_URL, {
+    method: 'POST',
+    body: JSON.stringify(state)
+  })
+  .then(() => {
+    if (!silent) showToast('Saved to the internet! ✓');
+  })
+  .catch(err => console.error("Save failed:", err));
 }
+
+function loadState() {
+  fetch(LOCKER_URL)
+    .then(response => {
+      if (!response.ok) throw new Error("No data found yet");
+      return response.json();
+    })
+    .then(data => {
+      if (data) {
+        state = data;
+        rerenderAll(); 
+      }
+    })
+    .catch(err => {
+      console.log("Starting empty:", err.message);
+      rerenderAll(); 
+    });
+}
+
 function clearAll() {
   if (!confirm('Clear ALL results and custom team names?')) return;
   state = { teams: {}, groupResults: {}, knockoutTeams: {}, knockoutResults: {} };
-  saveAll(true);
+  saveAll(true); 
   location.reload();
 }
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
-
 // ============================
 // TEAM NAMES
 // ============================
@@ -1180,10 +1206,10 @@ function exportCSV() {
 }
 
 // ============================
+// ============================
 // INIT
 // ============================
 loadState();
-rerenderAll();
 </script>
 </body>
 </html>
