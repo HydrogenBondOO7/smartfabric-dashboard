@@ -582,8 +582,8 @@ const FINAL_DATE = { date:'July 20', venue:'New Jersey', time:'1:00 am' };
 // SIMPLE CLOUD SYNC
 // ============================
 
-// Make up a unique name so your locker doesn't mix with anyone else's!
-const LOCKER_URL = "https://kvdb.io/M886b4m66S84nBq7pYt9wQ/HydrogenBondSunfifa20026";
+// Paste your real npoint.io link inside the quotes below!
+const LOCKER_URL = "https://api.npoint.io/https://api.npoint.io/c960799de52426af8d36";
 
 let state = {
   teams: {},
@@ -593,8 +593,12 @@ let state = {
 };
 
 function saveAll(silent) {
+  // We added headers here so the locker knows we are sending JSON data
   fetch(LOCKER_URL, {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify(state)
   })
   .then(() => {
@@ -604,20 +608,19 @@ function saveAll(silent) {
 }
 
 function loadState() {
-  fetch(LOCKER_URL)
-    .then(response => {
-      if (!response.ok) throw new Error("Empty locker");
-      return response.text(); // Read as text first to prevent crashes
-    })
-.then(text => {
-      let data = JSON.parse(text);
-      if (data && data.teams) { 
+  // We added "?t=" and a timestamp. This tricks your phone into thinking it's a 
+  // brand new link every time, forcing it to fetch the freshest scores instead of a cached blank page!
+  fetch(LOCKER_URL + "?t=" + new Date().getTime(), { cache: 'no-store' })
+    .then(response => response.json())
+    .then(data => {
+      // Only update the screen if we successfully downloaded real team data
+      if (data && data.teams) {
         state = data;
-        rerenderAll(true); // <-- Add the "true" here too!
+        rerenderAll(true); 
       }
     })
     .catch(err => {
-      console.log("No saved data found yet. Using the default schedule.");
+      console.log("Starting empty:", err.message);
     });
 }
 
@@ -625,7 +628,7 @@ function clearAll() {
   if (!confirm('Clear ALL results and custom team names?')) return;
   state = { teams: {}, groupResults: {}, knockoutTeams: {}, knockoutResults: {} };
   saveAll(true);
-  rerenderAll();
+  rerenderAll(true);
 }
 
 function showToast(msg) {
