@@ -579,14 +579,11 @@ const THIRD_PLACE_DATE = { date:'July 19', venue:'Miami', time:'3:00 am' };
 const FINAL_DATE = { date:'July 20', venue:'New Jersey', time:'1:00 am' };
 
 // ============================
-// STATE
-// ============================
-let // ============================
 // SIMPLE CLOUD SYNC
 // ============================
 
 // Make up a unique name so your locker doesn't mix with anyone else's!
-const LOCKER_URL = "https://kvdb.io/M886b4m66S84nBq7pYt9wQ/PUT_YOUR_NAME_HERE";
+const LOCKER_URL = "https://kvdb.io/M886b4m66S84nBq7pYt9wQ/HydrogenBondSunfifa";
 
 let state = {
   teams: {},
@@ -609,26 +606,27 @@ function saveAll(silent) {
 function loadState() {
   fetch(LOCKER_URL)
     .then(response => {
-      if (!response.ok) throw new Error("No data found yet");
-      return response.json();
+      if (!response.ok) throw new Error("Empty locker");
+      return response.text(); // Read as text first to prevent crashes
     })
-    .then(data => {
-      if (data) {
+    .then(text => {
+      let data = JSON.parse(text);
+      // ONLY update the screen if valid team data was actually found
+      if (data && data.teams) { 
         state = data;
         rerenderAll(); 
       }
     })
     .catch(err => {
-      console.log("Starting empty:", err.message);
-      rerenderAll(); 
+      console.log("No saved data found yet. Using the default schedule.");
     });
 }
 
 function clearAll() {
   if (!confirm('Clear ALL results and custom team names?')) return;
   state = { teams: {}, groupResults: {}, knockoutTeams: {}, knockoutResults: {} };
-  saveAll(true); 
-  location.reload();
+  saveAll(true);
+  rerenderAll();
 }
 
 function showToast(msg) {
@@ -1144,6 +1142,7 @@ function getSFLoser(i) {
 }
 
 // ============================
+// ============================
 // NAV
 // ============================
 function showSection(id, el) {
@@ -1154,13 +1153,12 @@ function showSection(id, el) {
 }
 
 // ============================
-// MASTER RERENDER (resets third-place allocation each pass)
+// MASTER RERENDER
 // ============================
 function rerenderAll() {
   window.__usedThirds = new Set();
   renderGroups();
   renderGroupStage();
-  // re-apply active filter
   renderStandings();
   renderR32();
   renderR16();
@@ -1206,10 +1204,10 @@ function exportCSV() {
 }
 
 // ============================
-// ============================
 // INIT
 // ============================
-loadState();
+rerenderAll(); // <-- This instantly draws the screen so it is never blank!
+loadState();   // <-- This checks the internet in the background and updates if it finds anything.
 </script>
 </body>
 </html>
