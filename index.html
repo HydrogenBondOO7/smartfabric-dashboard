@@ -609,12 +609,11 @@ function loadState() {
       if (!response.ok) throw new Error("Empty locker");
       return response.text(); // Read as text first to prevent crashes
     })
-    .then(text => {
+.then(text => {
       let data = JSON.parse(text);
-      // ONLY update the screen if valid team data was actually found
       if (data && data.teams) { 
         state = data;
-        rerenderAll(); 
+        rerenderAll(true); // <-- Add the "true" here too!
       }
     })
     .catch(err => {
@@ -1153,9 +1152,10 @@ function showSection(id, el) {
 }
 
 // ============================
+// ============================
 // MASTER RERENDER
 // ============================
-function rerenderAll() {
+function rerenderAll(preventSave = false) {
   window.__usedThirds = new Set();
   renderGroups();
   renderGroupStage();
@@ -1165,7 +1165,11 @@ function rerenderAll() {
   renderQF();
   renderSF();
   renderFinal();
-  saveAll(true);
+  
+  // Only save if the safety switch is OFF
+  if (preventSave === false) {
+    saveAll(true);
+  }
 }
 
 // ============================
@@ -1206,8 +1210,8 @@ function exportCSV() {
 // ============================
 // INIT
 // ============================
-rerenderAll(); // <-- This instantly draws the screen so it is never blank!
-loadState();   // <-- This checks the internet in the background and updates if it finds anything.
+rerenderAll(true); // <-- Draws the blank screen but PREVENTS it from erasing the internet locker!
+loadState();       // <-- Safely downloads your saved scores from the internet.
 </script>
 </body>
 </html>
