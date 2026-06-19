@@ -579,64 +579,80 @@ const THIRD_PLACE_DATE = { date:'July 19', venue:'Miami', time:'3:00 am' };
 const FINAL_DATE = { date:'July 20', venue:'New Jersey', time:'1:00 am' };
 
 // ============================
-// SIMPLE CLOUD SYNC
+// STATE
 // ============================
-
-// Paste your real npoint.io link inside the quotes below!
-const LOCKER_URL = "https://api.npoint.io/https://api.npoint.io/c960799de52426af8d36";
-
 let state = {
   teams: {},
   groupResults: {},
-  knockoutTeams: {},
-  knockoutResults: {},
+  knockoutTeams: {},   // manual overrides for KO team names, keyed "r32_0_t1"
+  knockoutResults: {}, // {s1,s2,pen} keyed "r32_0"
 };
 
-function saveAll(silent) {
-  // We added headers here so the locker knows we are sending JSON data
-  fetch(LOCKER_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(state)
-  })
-  .then(() => {
-    if (!silent) showToast('Saved to the internet! ✓');
-  })
-  .catch(err => console.error("Save failed:", err));
-}
+// === 1. FIREBASE SETUP ===
+const firebaseConfig = {
+  apiKey: "AIzaSyABvAb2GAKJQ84vYq7WxnzG6bQLjRJ0zaY",
+  authDomain: "world-cup-2026-f65be.firebaseapp.com",
+  databaseURL: "https://world-cup-2026-f65be-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "world-cup-2026-f65be",
+  storageBucket: "world-cup-2026-f65be.firebasestorage.app",
+  messagingSenderId: "372497051360",
+  appId: "1:372497051360:web:ed77c569613a29416faa85"
+};
+// Initialize the database using the scripts you put at the bottom of the HTML
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
+// === 2. THE WATCHER (Phone / Viewer) ===
 function loadState() {
-  // We added "?t=" and a timestamp. This tricks your phone into thinking it's a 
-  // brand new link every time, forcing it to fetch the freshest scores instead of a cached blank page!
-  fetch(LOCKER_URL + "?t=" + new Date().getTime(), { cache: 'no-store' })
-    .then(response => response.json())
-    .then(data => {
-      // Only update the screen if we successfully downloaded real team data
-      if (data && data.teams) {
-        state = data;
-        rerenderAll(true); 
-      }
-    })
-    .catch(err => {
-      console.log("Starting empty:", err.message);
-    });
+  // Still load locally first so the screen isn't blank while checking the internet
+  try {
+    const s = localStorage.getItem('wc2026_state_v2');
+    if (s) state = JSON.parse(s);
+  } catch(e) {}
+
+  // Listen to the cloud 24/7. When data changes, update the screen!
+  database.ref('wc2026_live_state').on('value', (snapshot) => {
+    const liveData = snapshot.val();
+    if (liveData) {
+      state = liveData; // Overwrite local data with the live cloud data
+      
+      // Redraw the entire screen with the new numbers instantly
+      window.__usedThirds = new Set();
+      renderGroups();
+      renderGroupStage();
+      renderStandings();
+      renderR32();
+      renderR16();
+      renderQF();
+      renderSF();
+      renderFinal();
+    }
+  });
 }
 
+// === 3. THE SENDER (Laptop / Admin) ===
+function saveAll(silent) {
+  // Save a local backup
+  localStorage.setItem('wc2026_state_v2', JSON.stringify(state)); 
+  
+  // Push the new numbers to the cloud instantly
+  database.ref('wc2026_live_state').set(state); 
+  
+  if (!silent) showToast('All changes saved to Cloud! ✓');
+}
 function clearAll() {
   if (!confirm('Clear ALL results and custom team names?')) return;
   state = { teams: {}, groupResults: {}, knockoutTeams: {}, knockoutResults: {} };
   saveAll(true);
-  rerenderAll(true);
+  location.reload();
 }
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
+
 // ============================
 // TEAM NAMES
 // ============================
@@ -1144,7 +1160,6 @@ function getSFLoser(i) {
 }
 
 // ============================
-// ============================
 // NAV
 // ============================
 function showSection(id, el) {
@@ -1155,24 +1170,20 @@ function showSection(id, el) {
 }
 
 // ============================
+// MASTER RERENDER (resets third-place allocation each pass)
 // ============================
-// MASTER RERENDER
-// ============================
-function rerenderAll(preventSave = false) {
+function rerenderAll() {
   window.__usedThirds = new Set();
   renderGroups();
   renderGroupStage();
+  // re-apply active filter
   renderStandings();
   renderR32();
   renderR16();
   renderQF();
   renderSF();
   renderFinal();
-  
-  // Only save if the safety switch is OFF
-  if (preventSave === false) {
-    saveAll(true);
-  }
+  saveAll(true);
 }
 
 // ============================
@@ -1213,8 +1224,12 @@ function exportCSV() {
 // ============================
 // INIT
 // ============================
-rerenderAll(true); // <-- Draws the blank screen but PREVENTS it from erasing the internet locker!
-loadState();       // <-- Safely downloads your saved scores from the internet.
+loadState();
+rerenderAll();
 </script>
+<!-- Firebase App (the core SDK) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </body>
 </html>
