@@ -1228,10 +1228,22 @@ function exportCSV() {
 }
 
 // ============================
+// ============================
 // INIT
 // ============================
 loadState();
-rerenderAll();
+
+// Draw the initial screen without triggering a "Save" to Firebase.
+// This allows the phone to load safely without erasing the cloud data!
+window.__usedThirds = new Set();
+renderGroups();
+renderGroupStage();
+renderStandings();
+renderR32();
+renderR16();
+renderQF();
+renderSF();
+renderFinal();
 </script>
 </body>
 </html>
