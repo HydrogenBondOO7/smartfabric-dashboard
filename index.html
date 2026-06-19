@@ -433,7 +433,8 @@
 
 <div class="save-bar"><button class="btn btn-green" onclick="saveAll()">💾 Save</button></div>
 <div class="toast" id="toast">Saved!</div>
-
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
 // ============================
 // STATIC DATA
@@ -604,7 +605,6 @@ const database = firebase.database();
 
 // === 2. THE WATCHER (Phone / Viewer) ===
 function loadState() {
-  // Still load locally first so the screen isn't blank while checking the internet
   try {
     const s = localStorage.getItem('wc2026_state_v2');
     if (s) state = JSON.parse(s);
@@ -614,9 +614,15 @@ function loadState() {
   database.ref('wc2026_live_state').on('value', (snapshot) => {
     const liveData = snapshot.val();
     if (liveData) {
-      state = liveData; // Overwrite local data with the live cloud data
       
-      // Redraw the entire screen with the new numbers instantly
+      // FIREBASE FIX: Ensure empty objects exist so the tables don't crash!
+      state = {
+        teams: liveData.teams || {},
+        groupResults: liveData.groupResults || {},
+        knockoutTeams: liveData.knockoutTeams || {},
+        knockoutResults: liveData.knockoutResults || {}
+      };
+      
       window.__usedThirds = new Set();
       renderGroups();
       renderGroupStage();
@@ -1227,9 +1233,5 @@ function exportCSV() {
 loadState();
 rerenderAll();
 </script>
-  <!-- Firebase App (the core SDK) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<!-- Firebase Realtime Database -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </body>
 </html>
